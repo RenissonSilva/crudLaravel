@@ -3,7 +3,7 @@
   <div class="row">
   <div class="col-sm-12">
     <div class="full-right">
-      <h2>CRUD Resource</h2>
+      <h2>Presentes</h2>
     </div>
   </div>
   </div>
@@ -16,9 +16,9 @@
 
   <table class="table table-bordered">
     <tr>
-      <th with="80px">No</th>
-      <th>Title</th>
-      <th>Body</th>
+      <th with="80px">ID</th>
+      <th>Item</th>
+      <th>Quem deu</th>
       <th with="140px" class="text-center">
         <a href="{{route('posts.create')}}" class="btn btn-success btn-sm">
           <i class="glyphicon glyphicon-plus"></i>

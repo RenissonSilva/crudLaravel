@@ -40,7 +40,7 @@ class PostsController extends Controller
           'body'=>'required',
         ]);
         Posts::create($request->all());
-        return redirect()->route('posts.index')->with('success','Post created success');
+        return redirect()->route('posts.index')->with('success','Criado com sucesso');
     }
 
     /**
@@ -81,7 +81,7 @@ class PostsController extends Controller
           'body' => 'required',
         ]);
         Posts::find($id)->update($request->all());
-        return redirect()->route('posts.index')->with('success','Post update success');
+        return redirect()->route('posts.index')->with('success','Atualizado com sucesso');
     }
 
     /**
@@ -93,6 +93,6 @@ class PostsController extends Controller
     public function destroy($id)
     {
         Posts::find($id)->delete();
-        return redirect()->route('posts.index')->with('success','Post deleted success');
+        return redirect()->route('posts.index')->with('success','Deletado com sucesso');
     }
 }
