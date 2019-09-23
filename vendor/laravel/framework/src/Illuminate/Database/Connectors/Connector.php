@@ -2,11 +2,11 @@
 
 namespace Illuminate\Database\Connectors;
 
-use Doctrine\DBAL\Driver\PDOConnection;
-use Exception;
-use Illuminate\Database\DetectsLostConnections;
 use PDO;
+use Exception;
 use Throwable;
+use Doctrine\DBAL\Driver\PDOConnection;
+use Illuminate\Database\DetectsLostConnections;
 
 class Connector
 {
@@ -32,12 +32,10 @@ class Connector
      * @param  array   $config
      * @param  array   $options
      * @return \PDO
-     *
-     * @throws \Exception
      */
     public function createConnection($dsn, array $config, array $options)
     {
-        [$username, $password] = [
+        list($username, $password) = [
             $config['username'] ?? null, $config['password'] ?? null,
         ];
 

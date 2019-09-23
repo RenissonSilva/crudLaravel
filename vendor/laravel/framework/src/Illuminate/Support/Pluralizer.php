@@ -45,8 +45,6 @@ class Pluralizer
         'pokemon',
         'police',
         'rain',
-        'recommended',
-        'related',
         'rice',
         'series',
         'sheep',
@@ -111,8 +109,8 @@ class Pluralizer
         $functions = ['mb_strtolower', 'mb_strtoupper', 'ucfirst', 'ucwords'];
 
         foreach ($functions as $function) {
-            if ($function($comparison) === $comparison) {
-                return $function($value);
+            if (call_user_func($function, $comparison) === $comparison) {
+                return call_user_func($function, $value);
             }
         }
 

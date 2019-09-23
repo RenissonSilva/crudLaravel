@@ -3,8 +3,8 @@
 namespace Illuminate\Foundation\Testing\Concerns;
 
 use Exception;
-use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -13,7 +13,7 @@ trait InteractsWithExceptionHandling
     /**
      * The original exception handler.
      *
-     * @var \Illuminate\Contracts\Debug\ExceptionHandler|null
+     * @var ExceptionHandler|null
      */
     protected $originalExceptionHandler;
 
@@ -90,17 +90,6 @@ trait InteractsWithExceptionHandling
             public function report(Exception $e)
             {
                 //
-            }
-
-            /**
-             * Determine if the exception should be reported.
-             *
-             * @param  \Exception  $e
-             * @return bool
-             */
-            public function shouldReport(Exception $e)
-            {
-                return false;
             }
 
             /**

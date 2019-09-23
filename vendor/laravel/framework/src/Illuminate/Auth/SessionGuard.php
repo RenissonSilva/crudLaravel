@@ -2,19 +2,19 @@
 
 namespace Illuminate\Auth;
 
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Contracts\Auth\StatefulGuard;
-use Illuminate\Contracts\Auth\SupportsBasicAuth;
-use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Contracts\Cookie\QueueingFactory as CookieJar;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Session\Session;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Support\Traits\Macroable;
 use RuntimeException;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Traits\Macroable;
+use Illuminate\Contracts\Session\Session;
+use Illuminate\Contracts\Auth\UserProvider;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Auth\StatefulGuard;
 use Symfony\Component\HttpFoundation\Request;
+use Illuminate\Contracts\Auth\SupportsBasicAuth;
+use Illuminate\Contracts\Cookie\QueueingFactory as CookieJar;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
 class SessionGuard implements StatefulGuard, SupportsBasicAuth
 {
@@ -135,7 +135,9 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
         // If the user is null, but we decrypt a "recaller" cookie we can attempt to
         // pull the user data on that cookie which serves as a remember cookie on
         // the application. Once we have a user we can return it to the caller.
-        if (is_null($this->user) && ! is_null($recaller = $this->recaller())) {
+        $recaller = $this->recaller();
+
+        if (is_null($this->user) && ! is_null($recaller)) {
             $this->user = $this->userFromRecaller($recaller);
 
             if ($this->user) {
@@ -327,7 +329,6 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
      * Get the response for basic authentication.
      *
      * @return void
-     *
      * @throws \Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException
      */
     protected function failedBasicResponse()
@@ -487,12 +488,12 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
         // listening for anytime a user signs out of this application manually.
         $this->clearUserDataFromStorage();
 
-        if (! is_null($this->user) && ! empty($user->getRememberToken())) {
+        if (! is_null($this->user)) {
             $this->cycleRememberToken($user);
         }
 
         if (isset($this->events)) {
-            $this->events->dispatch(new Events\Logout($this->name, $user));
+            $this->events->dispatch(new Events\Logout($user));
         }
 
         // Once we have fired the logout event we will clear the users out of memory
@@ -532,32 +533,6 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
     }
 
     /**
-     * Log the user out of the application on their current device only.
-     *
-     * @return void
-     */
-    public function logoutCurrentDevice()
-    {
-        $user = $this->user();
-
-        // If we have an event dispatcher instance, we can fire off the logout event
-        // so any further processing can be done. This allows the developer to be
-        // listening for anytime a user signs out of this application manually.
-        $this->clearUserDataFromStorage();
-
-        if (isset($this->events)) {
-            $this->events->dispatch(new Events\CurrentDeviceLogout($this->name, $user));
-        }
-
-        // Once we have fired the logout event we will clear the users out of memory
-        // so they are no longer available as the user is no longer considered as
-        // being signed into this application and should not be available here.
-        $this->user = null;
-
-        $this->loggedOut = true;
-    }
-
-    /**
      * Invalidate other sessions for the current user.
      *
      * The application must be using the AuthenticateSession middleware.
@@ -576,12 +551,7 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
             $attribute => Hash::make($password),
         ]))->save();
 
-        if ($this->recaller() ||
-            $this->getCookieJar()->hasQueued($this->getRecallerName())) {
-            $this->queueRecallerCookie($this->user());
-        }
-
-        $this->fireOtherDeviceLogoutEvent($this->user());
+        $this->queueRecallerCookie($this->user());
 
         return $result;
     }
@@ -610,7 +580,7 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
     {
         if (isset($this->events)) {
             $this->events->dispatch(new Events\Attempting(
-                $this->name, $credentials, $remember
+                $credentials, $remember
             ));
         }
     }
@@ -625,9 +595,7 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
     protected function fireLoginEvent($user, $remember = false)
     {
         if (isset($this->events)) {
-            $this->events->dispatch(new Events\Login(
-                $this->name, $user, $remember
-            ));
+            $this->events->dispatch(new Events\Login($user, $remember));
         }
     }
 
@@ -640,24 +608,7 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
     protected function fireAuthenticatedEvent($user)
     {
         if (isset($this->events)) {
-            $this->events->dispatch(new Events\Authenticated(
-                $this->name, $user
-            ));
-        }
-    }
-
-    /**
-     * Fire the other device logout event if the dispatcher is set.
-     *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @return void
-     */
-    protected function fireOtherDeviceLogoutEvent($user)
-    {
-        if (isset($this->events)) {
-            $this->events->dispatch(new Events\OtherDeviceLogout(
-                $this->name, $user
-            ));
+            $this->events->dispatch(new Events\Authenticated($user));
         }
     }
 
@@ -671,9 +622,7 @@ class SessionGuard implements StatefulGuard, SupportsBasicAuth
     protected function fireFailedEvent($user, array $credentials)
     {
         if (isset($this->events)) {
-            $this->events->dispatch(new Events\Failed(
-                $this->name, $user, $credentials
-            ));
+            $this->events->dispatch(new Events\Failed($user, $credentials));
         }
     }
 

@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 /*
  * This file is part of PHPUnit.
  *
@@ -12,10 +12,7 @@ use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @small
- */
-final class MockObjectTest extends TestCase
+class MockObjectTest extends TestCase
 {
     public function testMockedMethodIsNeverCalled(): void
     {
@@ -467,9 +464,6 @@ final class MockObjectTest extends TestCase
         $this->assertNotEquals(\get_class($mock1), \get_class($mock2));
     }
 
-    /**
-     * @testdox getMock() for abstract class
-     */
     public function testGetMockForAbstractClass(): void
     {
         $mock = $this->getMockBuilder(AbstractMockTestClass::class)
@@ -480,7 +474,6 @@ final class MockObjectTest extends TestCase
     }
 
     /**
-     * @testdox getMock() for Traversable $_dataName
      * @dataProvider traversableProvider
      */
     public function testGetMockForTraversable($type): void
@@ -500,9 +493,6 @@ final class MockObjectTest extends TestCase
         $this->assertInstanceOf(AnotherInterface::class, $mock);
     }
 
-    /**
-     * @testdox getMockForTrait()
-     */
     public function testGetMockForTrait(): void
     {
         $mock = $this->getMockForTrait(AbstractTrait::class);
@@ -1026,12 +1016,12 @@ final class MockObjectTest extends TestCase
     public function traversableProvider(): array
     {
         return [
-            'Traversable'                   => ['Traversable'],
-            '\Traversable'                  => ['\Traversable'],
-            'TraversableMockTestInterface'  => ['TraversableMockTestInterface'],
-            "['Traversable']"               => [['Traversable']],
-            "['Iterator', 'Traversable']"   => [['Iterator', 'Traversable']],
-            "['\Iterator', '\Traversable']" => [['\Iterator', '\Traversable']],
+            ['Traversable'],
+            ['\Traversable'],
+            ['TraversableMockTestInterface'],
+            [['Traversable']],
+            [['Iterator', 'Traversable']],
+            [['\Iterator', '\Traversable']],
         ];
     }
 

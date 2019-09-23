@@ -2,25 +2,25 @@
 
 namespace Illuminate\Database;
 
+use PDO;
 use Closure;
-use DateTimeInterface;
-use Doctrine\DBAL\Connection as DoctrineConnection;
 use Exception;
+use PDOStatement;
+use LogicException;
+use DateTimeInterface;
+use Illuminate\Support\Arr;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Events\QueryExecuted;
-use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Query\Expression;
-use Illuminate\Database\Query\Grammars\Grammar as QueryGrammar;
+use Doctrine\DBAL\Connection as DoctrineConnection;
 use Illuminate\Database\Query\Processors\Processor;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Schema\Builder as SchemaBuilder;
-use Illuminate\Support\Arr;
-use LogicException;
-use PDO;
-use PDOStatement;
+use Illuminate\Database\Query\Grammars\Grammar as QueryGrammar;
 
 class Connection implements ConnectionInterface
 {
-    use DetectsConcurrencyErrors,
+    use DetectsDeadlocks,
         DetectsLostConnections,
         Concerns\ManagesTransactions;
 
@@ -257,13 +257,12 @@ class Connection implements ConnectionInterface
     /**
      * Begin a fluent query against a database table.
      *
-     * @param  \Closure|\Illuminate\Database\Query\Builder|string  $table
-     * @param  string|null  $as
+     * @param  string  $table
      * @return \Illuminate\Database\Query\Builder
      */
-    public function table($table, $as = null)
+    public function table($table)
     {
-        return $this->query()->from($table, $as);
+        return $this->query()->from($table);
     }
 
     /**
@@ -701,15 +700,14 @@ class Connection implements ConnectionInterface
     /**
      * Handle a query exception.
      *
-     * @param  \Illuminate\Database\QueryException  $e
+     * @param  \Exception  $e
      * @param  string  $query
      * @param  array  $bindings
      * @param  \Closure  $callback
      * @return mixed
-     *
-     * @throws \Illuminate\Database\QueryException
+     * @throws \Exception
      */
-    protected function handleQueryException(QueryException $e, $query, $bindings, Closure $callback)
+    protected function handleQueryException($e, $query, $bindings, Closure $callback)
     {
         if ($this->transactions >= 1) {
             throw $e;
@@ -752,8 +750,6 @@ class Connection implements ConnectionInterface
     public function reconnect()
     {
         if (is_callable($this->reconnector)) {
-            $this->doctrineConnection = null;
-
             return call_user_func($this->reconnector, $this);
         }
 
@@ -898,12 +894,11 @@ class Connection implements ConnectionInterface
         if (is_null($this->doctrineConnection)) {
             $driver = $this->getDoctrineDriver();
 
-            $this->doctrineConnection = new DoctrineConnection(array_filter([
+            $this->doctrineConnection = new DoctrineConnection([
                 'pdo' => $this->getPdo(),
                 'dbname' => $this->getConfig('database'),
                 'driver' => $driver->getName(),
-                'serverVersion' => $this->getConfig('server_version'),
-            ]), $driver);
+            ], $driver);
         }
 
         return $this->doctrineConnection;
@@ -1031,13 +1026,11 @@ class Connection implements ConnectionInterface
      * Set the query grammar used by the connection.
      *
      * @param  \Illuminate\Database\Query\Grammars\Grammar  $grammar
-     * @return $this
+     * @return void
      */
     public function setQueryGrammar(Query\Grammars\Grammar $grammar)
     {
         $this->queryGrammar = $grammar;
-
-        return $this;
     }
 
     /**
@@ -1054,13 +1047,11 @@ class Connection implements ConnectionInterface
      * Set the schema grammar used by the connection.
      *
      * @param  \Illuminate\Database\Schema\Grammars\Grammar  $grammar
-     * @return $this
+     * @return void
      */
     public function setSchemaGrammar(Schema\Grammars\Grammar $grammar)
     {
         $this->schemaGrammar = $grammar;
-
-        return $this;
     }
 
     /**
@@ -1077,13 +1068,11 @@ class Connection implements ConnectionInterface
      * Set the query post processor used by the connection.
      *
      * @param  \Illuminate\Database\Query\Processors\Processor  $processor
-     * @return $this
+     * @return void
      */
     public function setPostProcessor(Processor $processor)
     {
         $this->postProcessor = $processor;
-
-        return $this;
     }
 
     /**
@@ -1100,13 +1089,11 @@ class Connection implements ConnectionInterface
      * Set the event dispatcher instance on the connection.
      *
      * @param  \Illuminate\Contracts\Events\Dispatcher  $events
-     * @return $this
+     * @return void
      */
     public function setEventDispatcher(Dispatcher $events)
     {
         $this->events = $events;
-
-        return $this;
     }
 
     /**
@@ -1120,7 +1107,7 @@ class Connection implements ConnectionInterface
     }
 
     /**
-     * Determine if the connection is in a "dry run".
+     * Determine if the connection in a "dry run".
      *
      * @return bool
      */
@@ -1193,13 +1180,11 @@ class Connection implements ConnectionInterface
      * Set the name of the connected database.
      *
      * @param  string  $database
-     * @return $this
+     * @return string
      */
     public function setDatabaseName($database)
     {
         $this->database = $database;
-
-        return $this;
     }
 
     /**
@@ -1216,15 +1201,13 @@ class Connection implements ConnectionInterface
      * Set the table prefix in use by the connection.
      *
      * @param  string  $prefix
-     * @return $this
+     * @return void
      */
     public function setTablePrefix($prefix)
     {
         $this->tablePrefix = $prefix;
 
         $this->getQueryGrammar()->setTablePrefix($prefix);
-
-        return $this;
     }
 
     /**
